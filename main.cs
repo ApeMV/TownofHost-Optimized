@@ -793,6 +793,7 @@ public enum CustomRoles
     Werewolf,
     Workaholic,
     Wraith,
+    Keymaster,
 
    //two-way camp
     Mini,
