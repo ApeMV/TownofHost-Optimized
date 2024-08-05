@@ -996,7 +996,7 @@
   "UnderclockedInfoLong": "(Add-ons):\nAs the Underclocked, your kill cooldown is increased by a certian amount.\n\nThis feature is only assigned to roles with a kill button.",
   "IdentifierInfoLong": "(Add-ons):\nAs the Identifier, when reporting a body, you will get a message in meeting saying if the Killer has a lighter or darker color.",
   "RepellantInfoLong": "(Neutral):|\nAs the Repellant, you can vent to temporarily shield yourself against killers. Live till the end to win.",
-  "KeymasterInfoLong": "(Neutral:\nAs the Keymaster, you must assign colored keys to the appropriate colored players.\n\nYou gain a random colored key every time you vent. After gaining a colored key, you must find and use your kill button on the player with the same player color to mark them.\n\nAfter marking every player, you must face one final challenge to determine if you win.\nA memory game will play, Memorize the correct colors and send them in a meeting to solo win.",
+  "KeymasterInfoLong": "(Neutral):\nThe Keymaster has 2 stages.\n\nStage 1:\nThe Keymaster must mark every living player with a key by using their kill button. To gain a key, the Keymaster has to simply enter a vent.\nAfter marking a player with a key, the Keymaster needs to vent again to gain a new key.\n\nStage 2:\nWhen marking the last living player, the Keymaster gains a random colored key, it's extremely important to remember the color.\nIn the next meeting, a text minigame will play. The Keymaster must look carefully and assign the correct key to what is being showcased.",
   "ShowTextOverlay": "Text Overlay",
   "Overlay.GuesserMode": "<size=50%>Guesser Mode</size>",
   "Overlay.NoGameEnd": "<size=50%>No Game End</size>",
@@ -3767,5 +3767,17 @@
   "DarkFairy_DarkenedCountMode_None": "Nothing",
   "DarkFairy_DarkenedCountMode_DarkFairy": "Dark Fairy",
   "DarkFairy_DarkenedCountMode_Original": "Original Team",
-  "DarkFairyCanDarkenNeutral": "Can darken Neutrals"
+  "DarkFairyCanDarkenNeutral": "Can darken Neutrals",
+
+  "KeymasterGainedKey": "You gained a key",
+  "KeymasterMarkedPlayer": "You Marked a player",
+  "KeymasterFocus": "FOCUS",
+  "KeymasterRed": "<color=#ff0000>RED KEY</color>",
+  "KeymasterBlue": "<color=#0000ff>BLUE KEY</color>",
+  "KeymasterGreen": "<color=#008000>GREEN KEY</color>",
+  "KeymasterPink": "<color=#ffc0cb>PINK KEY</color>",
+  "KeymasterCyan": "<color=#00ffff>CYAN KEY</color>",
+  "KeymasterYellow": "<color=#ffff00>YELLOW KEY</color>",
+  "KeymasterPurple": "<color=a020f0>PURPLE KEY</color>",
+  "KeymasterLime": "<color=#32cd32>LIME KEY</color>"
 }
