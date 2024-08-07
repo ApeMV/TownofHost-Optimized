@@ -24,39 +24,37 @@ internal class Keymaster : RoleBase
     //==================================================================\\
 
     private static readonly Dictionary<byte, HashSet<byte>> KeyedList = [];
+    public static Dictionary<byte, string> KeymasterNotify = [];
     private static OptionItem KeyGiveCooldown;
     private static byte KeyID = 10;
+    private static byte ColID = 10;
+    private static byte kmColor = 10;
     private static bool HasKey = false;
-    private static bool FOCUSED = false;
-    private static bool RED = false;
-    private static bool BLUE = false;
-    private static bool GREEN = false;
-    private static bool PINK = false;
-    private static bool CYAN = false;
-    private static bool YELLOW = false;
-    private static bool PURPLE = false;
-    private static bool LIME = false;
+    private static int KeyColor = 10;
+    private static bool CanGetColoredKey = false;
+    private static bool LimboState = false;
+    int Count;
+    private static OptionItem IntervalDifficulty;
+    public static long LastColorChange;
 
     public override void SetupCustomOption()
     {
         SetupRoleOptions(Id, TabGroup.NeutralRoles, CustomRoles.Keymaster);
         KeyGiveCooldown = FloatOptionItem.Create(Id + 10, GeneralOption.KillCooldown, new(0, 300, 5), 5f, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster])
             .SetValueFormat(OptionFormat.Seconds);
+        IntervalDifficulty = IntegerOptionItem.Create(Id + 11, "KeymasterIntervalDifficulty", new (1, 3, 1), 3, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster]);
     }
     public override void Init()
     {
         playerIdList.Clear();
-        HasKey = false;
+        LastColorChange = Utils.GetTimeStamp();
+        KeyColor = 10;
         KeyID = 10;
-        FOCUSED = false;
-        RED = false;
-        BLUE = false;
-        GREEN = false;
-        PINK = false;
-        CYAN = false;
-        YELLOW = false;
-        PURPLE = false;
-        LIME = false;
+        ColID = 10;
+        kmColor = 10;
+        LimboState = false;
+        HasKey = false;
+        CanGetColoredKey = false;
         KeyedList.Clear();
     }
     public override void Add(byte playerId)
@@ -100,7 +98,28 @@ internal class Keymaster : RoleBase
         {
         HasKey = false;
         }
-        else
+        if (KeyColor == 1 && kmColor == 1 || KeyColor == 2 && kmColor == 2 || KeyColor == 3 && kmColor == 3 || KeyColor == 4 && kmColor == 4 || KeyColor == 5 && kmColor == 5 || KeyColor == 6 && kmColor == 6 || KeyColor == 7 && kmColor == 7 || KeyColor == 8 && kmColor == 8)
+        {
+            pc.Notify(GetString("YOUWIN"), 3f);
+            foreach (var player in Main.AllAlivePlayerControls)
+            if (pc.PlayerId != player.PlayerId)
+            {
+                Main.PlayerStates[player.PlayerId].deathReason = player.PlayerId == pc.PlayerId ?
+                    PlayerState.DeathReason.Overtired : PlayerState.DeathReason.Ashamed;
+
+                pc.RpcMurderPlayer(player);
+                player.SetRealKiller(pc);
+                CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Keymaster); //Workaholic win
+                CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
+                
+            }
+        }
+        if (KeyColor == 1 && kmColor != 1 || KeyColor == 2 && kmColor != 2 || KeyColor == 3 && kmColor != 3 || KeyColor == 4 && kmColor != 4 || KeyColor == 5 && kmColor != 5 || KeyColor == 6 && kmColor != 6 || KeyColor == 7 && kmColor != 7 || KeyColor == 8 && kmColor != 8)
+        {
+        pc.Notify(GetString("YOULOSE"), 5f);
+        pc.RpcMurderPlayer(pc);
+        }
+        if (LimboState == false)
         {
         HasKey = true;
         pc.Notify(GetString("KeymasterGainedKey"), 5f);
@@ -125,49 +144,50 @@ internal class Keymaster : RoleBase
         killer.SetKillCooldown();
         HasKey = false;
         }
-        if (FOCUSED == true)
+        if (CanGetColoredKey == true)
         {
         var rand = IRandom.Instance;
-        KeyID = (byte)rand.Next(1, 8);
+        KeyID = (byte)rand.Next(1, 9);
 
             switch (KeyID)
             {
                 case 1:
                     killer.Notify(GetString("KeymasterRed"), 15f);
-                    RED = true;
+                    KeyColor = 1;
                     break;
                 case 2:
                     killer.Notify(GetString("KeymasterBlue"), 15f);
-                    BLUE = true;
+                    KeyColor = 2;
                     break;
                 case 3:
                     killer.Notify(GetString("KeymasterGreen"), 15f);
-                    GREEN = true;
+                    KeyColor = 3;
                     break;
                 case 4:
                     killer.Notify(GetString("KeymasterPink"), 15f);
-                    PINK = true;
+                    KeyColor = 4;
                     break;
                 case 5:
-                    killer.Notify(GetString("KeymasterCyan"), 15f);
-                    CYAN = true;
+                    killer.Notify(GetString("KeymasterOrange"), 15f);
+                    KeyColor = 5;
                     break;
                 case 6:
                     killer.Notify(GetString("KeymasterYellow"), 15f);
-                    YELLOW = true;
+                    KeyColor = 6;
                     break;
                 case 7:
-                    killer.Notify(GetString("KeymasterPurple"), 15f);
-                    PURPLE = true;
+                    killer.Notify(GetString("KeymasterBlack"), 15f);
+                    KeyColor = 7;
                     break;
                 case 8:
-                    killer.Notify(GetString("KeymasterLime"), 15f);
-                    LIME = true;
+                    killer.Notify(GetString("KeymasterWhite"), 15f);
+                    KeyColor = 8;
                     break;
                 default:
                     break;
             }
-            FOCUSED = false;
+            LimboState = true;
+            CanGetColoredKey = false;
             return false;
         }
         return false;
@@ -198,7 +218,7 @@ internal class Keymaster : RoleBase
             {
                 Keymaster.RpcGuardAndKill(Keymaster);
                 Keymaster.ResetKillCooldown();
-                FOCUSED = true;
+                CanGetColoredKey = true;
                 NotifyRoles(SpecifySeer: Keymaster);
                 Keymaster.MarkDirtySettings();
             }
@@ -211,5 +231,125 @@ internal class Keymaster : RoleBase
     {
         var (keyed, all) = KeyedPlayerCount(playerId);
         return ColorString(GetRoleColor(CustomRoles.Keymaster).ShadeColor(0.25f), $"({keyed}/{all})");
+    }
+    public override void OnFixedUpdate(PlayerControl pc)
+    {
+        Count++;
+
+        if (IntervalDifficulty.GetInt() == 3 && Count < 15) return;
+        if (IntervalDifficulty.GetInt() == 2 && Count < 30) return;
+        if (IntervalDifficulty.GetInt() == 1 && Count < 45) return;
+        Count = 0;
+        if (Count % 3 == 0 && LimboState == true)
+        {
+            Count = 0;
+            var rand = IRandom.Instance;
+            ColID = (byte)rand.Next(1, 9);
+            var KeymasterOutfit = Camouflage.PlayerSkins[pc.PlayerId];
+
+                switch (ColID)
+                {
+                    case 1:
+                        if (kmColor !=1)
+                        {
+                        pc.RpcSetColor(0);
+                        kmColor = 1;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(1);
+                        kmColor = 2;
+                        }
+                        break;
+                    case 2:
+                        if (kmColor !=2)
+                        {
+                        pc.RpcSetColor(1);
+                        kmColor = 2;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(2);
+                        kmColor = 3;
+                        }
+                        break;
+                    case 3:
+                        if (kmColor !=3)
+                        {
+                        pc.RpcSetColor(2);
+                        kmColor = 3;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(3);
+                        kmColor = 4;
+                        }
+                        break;
+                    case 4:
+                        if (kmColor !=4)
+                        {
+                        pc.RpcSetColor(3);
+                        kmColor = 4;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(4);
+                        kmColor = 5;
+                        }
+                        break;
+                    case 5:
+                        if (kmColor !=5)
+                        {
+                        pc.RpcSetColor(4);
+                        kmColor = 5;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(5);
+                        kmColor = 6;
+                        }
+                        break;
+                    case 6:
+                        if (kmColor !=6)
+                        {
+                        pc.RpcSetColor(5);
+                        kmColor = 6;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(6);
+                        kmColor = 7;
+                        }
+                        break;
+                    case 7:
+                        if (kmColor !=7)
+                        {
+                        pc.RpcSetColor(6);
+                        kmColor = 7;
+                        }
+                        else
+                        {
+                        pc.RpcSetColor(7);
+                        kmColor = 8;
+                        }
+                        break;
+                    case 8:
+                        if (kmColor !=8)
+                        {
+                        pc.RpcSetColor(7);
+                        kmColor = 8;
+                        }
+                        else 
+                        {
+                        pc.RpcSetColor(0);
+                        kmColor = 1;
+                        }
+                        break;
+                    default:
+                        break;
+                
+            }
+        }
+        Count = 0;
     }
 }
