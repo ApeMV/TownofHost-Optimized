@@ -1311,6 +1311,7 @@ public static class CustomRolesHelper
             CustomRoles.Doppelganger => CustomWinner.Doppelganger,
             CustomRoles.DarkFairy => CustomWinner.DarkFairy,
             CustomRoles.Assassin => CustomWinner.Assassin,
+            CustomRoles.Keymaster => CustomWinner.Keymaster,
             _ => throw new NotImplementedException()
 
         };
