@@ -236,9 +236,9 @@ internal class Keymaster : RoleBase
     {
         Count++;
 
-        if (IntervalDifficulty.GetInt() == 3 && Count < 15) return;
+        if (IntervalDifficulty.GetInt() == 3 && Count < 20) return;
         if (IntervalDifficulty.GetInt() == 2 && Count < 30) return;
-        if (IntervalDifficulty.GetInt() == 1 && Count < 45) return;
+        if (IntervalDifficulty.GetInt() == 1 && Count < 40) return;
         Count = 0;
         if (Count % 3 == 0 && LimboState == true)
         {
