@@ -954,6 +954,7 @@ public enum CustomWinner
     Solsticer = CustomRoles.Solsticer,
     DarkFairy = CustomRoles.DarkFairy,
     Assassin = CustomRoles.Assassin,
+    Keymaster = CustomRoles.Keymaster,
 }
 public enum AdditionalWinners
 {
