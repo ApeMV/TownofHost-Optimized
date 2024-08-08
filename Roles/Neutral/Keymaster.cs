@@ -23,24 +23,30 @@ internal class Keymaster : RoleBase
 
     private static readonly Dictionary<byte, HashSet<byte>> KeyedList = [];
     public static Dictionary<byte, string> KeymasterNotify = [];
-    private static OptionItem KeyGiveCooldown;
+    private static OptionItem GiveKeyCooldown;
+    public static OptionItem StealsWin;
+    private static OptionItem Stage2Difficulty;
+    private static OptionItem ColoredKeyNotiDuration;
     private static byte KeyID = 10;
     private static byte ColID = 10;
     private static byte kmColor = 10;
-    private static bool HasKey = false;
     private static int KeyColor = 10;
+    private static bool HasKey = false;
+    public static bool HasWon = false;
     private static bool CanGetColoredKey = false;
     private static bool LimboState = false;
     int Count;
-    private static OptionItem IntervalDifficulty;
     public static long LastColorChange;
 
     public override void SetupCustomOption()
     {
         SetupRoleOptions(Id, TabGroup.NeutralRoles, CustomRoles.Keymaster);
-        KeyGiveCooldown = FloatOptionItem.Create(Id + 10, GeneralOption.KillCooldown, new(0, 300, 5), 5f, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster])
+        GiveKeyCooldown = FloatOptionItem.Create(Id + 10, "KeymasterGiveKeyCooldown", new(0f, 60f, 2.5f), 5f, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster])
             .SetValueFormat(OptionFormat.Seconds);
-        IntervalDifficulty = IntegerOptionItem.Create(Id + 11, "KeymasterIntervalDifficulty", new (1, 3, 1), 3, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster]);
+        ColoredKeyNotiDuration = IntegerOptionItem.Create(Id + 11, "KeymasterColoredKeyNotiDuration", new (1, 30, 1), 3, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster])
+            .SetValueFormat(OptionFormat.Seconds);
+        Stage2Difficulty = IntegerOptionItem.Create(Id + 12, "KeymasterStage2Difficulty", new (1, 3, 1), 3, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster]);
+        StealsWin = BooleanOptionItem.Create( Id + 13, "KeymasterStealsWin", false, TabGroup.NeutralRoles, false).SetParent(CustomRoleSpawnChances[CustomRoles.Keymaster]);
     }
     public override void Init()
     {
@@ -52,6 +58,7 @@ internal class Keymaster : RoleBase
         kmColor = 10;
         LimboState = false;
         HasKey = false;
+        HasWon = false;
         CanGetColoredKey = false;
         KeyedList.Clear();
     }
@@ -69,7 +76,7 @@ internal class Keymaster : RoleBase
         KeyedList.Remove(playerId);
     }
 
-    public override void SetKillCooldown(byte id) => Main.AllPlayerKillCooldown[id] = KeyGiveCooldown.GetFloat();
+    public override void SetKillCooldown(byte id) => Main.AllPlayerKillCooldown[id] = GiveKeyCooldown.GetFloat();
     public override bool CanUseKillButton(PlayerControl pc) => true;
     public override bool CanUseImpostorVentButton(PlayerControl pc) => true;
     private static bool IsKeyed(byte pc, byte target) => KeyedList.TryGetValue(pc, out var Targets) && Targets.Contains(target);
@@ -94,33 +101,36 @@ internal class Keymaster : RoleBase
     {
         if (IsKeyedAll(pc))
         {
-        HasKey = false;
+            HasKey = false;
         }
         if (KeyColor == 1 && kmColor == 1 || KeyColor == 2 && kmColor == 2 || KeyColor == 3 && kmColor == 3 || KeyColor == 4 && kmColor == 4 || KeyColor == 5 && kmColor == 5 || KeyColor == 6 && kmColor == 6 || KeyColor == 7 && kmColor == 7 || KeyColor == 8 && kmColor == 8)
         {
-            pc.Notify(GetString("YOUWIN"), 3f);
+            pc.Notify(GetString("KeymasterGG"), 3f);
+            KeyColor = 69;
+            HasWon = true;
             foreach (var player in Main.AllAlivePlayerControls)
-            if (pc.PlayerId != player.PlayerId)
+            if (pc.PlayerId != player.PlayerId && StealsWin.GetBool() == true)
             {
                 Main.PlayerStates[player.PlayerId].deathReason = player.PlayerId == pc.PlayerId ?
                     PlayerState.DeathReason.Overtired : PlayerState.DeathReason.Ashamed;
 
                 pc.RpcMurderPlayer(player);
                 player.SetRealKiller(pc);
-                CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Keymaster); //Workaholic win
+                CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Keymaster); //Keymaster solo win
                 CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
                 
             }
+
         }
         if (KeyColor == 1 && kmColor != 1 || KeyColor == 2 && kmColor != 2 || KeyColor == 3 && kmColor != 3 || KeyColor == 4 && kmColor != 4 || KeyColor == 5 && kmColor != 5 || KeyColor == 6 && kmColor != 6 || KeyColor == 7 && kmColor != 7 || KeyColor == 8 && kmColor != 8)
         {
-        pc.Notify(GetString("YOULOSE"), 5f);
-        pc.RpcMurderPlayer(pc);
+            pc.Notify(GetString("KeymasterL"), 5f);
+            pc.RpcMurderPlayer(pc);
         }
-        if (LimboState == false)
+            if (LimboState == false)
         {
-        HasKey = true;
-        pc.Notify(GetString("KeymasterGainedKey"), 5f);
+            HasKey = true;
+            pc.Notify(GetString("KeymasterGainedKey"), 5f);
         }
     }
     public override bool ForcedCheckMurderAsKiller(PlayerControl killer, PlayerControl target)
@@ -131,16 +141,16 @@ internal class Keymaster : RoleBase
         }
         if (HasKey == true)
         {
-        KeyedList[killer.PlayerId].Add(target.PlayerId);
-        SendRPC(killer, target);
-        NotifyRoles(SpecifySeer: killer);
-        killer.Notify(GetString("KeymasterMarkedPlayer"), 5f);
+            KeyedList[killer.PlayerId].Add(target.PlayerId);
+            SendRPC(killer, target);
+            NotifyRoles(SpecifySeer: killer);
+            killer.Notify(GetString("KeymasterMarkedPlayer"), 5f);
 
-        CheckKeyedAllPlayers();
+            CheckKeyedAllPlayers();
 
-        killer.ResetKillCooldown();
-        killer.SetKillCooldown();
-        HasKey = false;
+            killer.ResetKillCooldown();
+            killer.SetKillCooldown();
+            HasKey = false;
         }
         if (CanGetColoredKey == true)
         {
@@ -150,35 +160,35 @@ internal class Keymaster : RoleBase
             switch (KeyID)
             {
                 case 1:
-                    killer.Notify(GetString("KeymasterRed"), 15f);
+                    killer.Notify(GetString("KeymasterRed"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 1;
                     break;
                 case 2:
-                    killer.Notify(GetString("KeymasterBlue"), 15f);
+                    killer.Notify(GetString("KeymasterBlue"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 2;
                     break;
                 case 3:
-                    killer.Notify(GetString("KeymasterGreen"), 15f);
+                    killer.Notify(GetString("KeymasterGreen"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 3;
                     break;
                 case 4:
-                    killer.Notify(GetString("KeymasterPink"), 15f);
+                    killer.Notify(GetString("KeymasterPink"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 4;
                     break;
                 case 5:
-                    killer.Notify(GetString("KeymasterOrange"), 15f);
+                    killer.Notify(GetString("KeymasterOrange"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 5;
                     break;
                 case 6:
-                    killer.Notify(GetString("KeymasterYellow"), 15f);
+                    killer.Notify(GetString("KeymasterYellow"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 6;
                     break;
                 case 7:
-                    killer.Notify(GetString("KeymasterBlack"), 15f);
+                    killer.Notify(GetString("KeymasterBlack"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 7;
                     break;
                 case 8:
-                    killer.Notify(GetString("KeymasterWhite"), 15f);
+                    killer.Notify(GetString("KeymasterWhite"), ColoredKeyNotiDuration.GetInt());
                     KeyColor = 8;
                     break;
                 default:
@@ -234,9 +244,9 @@ internal class Keymaster : RoleBase
     {
         Count++;
 
-        if (IntervalDifficulty.GetInt() == 3 && Count < 20) return;
-        if (IntervalDifficulty.GetInt() == 2 && Count < 30) return;
-        if (IntervalDifficulty.GetInt() == 1 && Count < 40) return;
+        if (Stage2Difficulty.GetInt() == 3 && Count < 20) return;
+        if (Stage2Difficulty.GetInt() == 2 && Count < 30) return;
+        if (Stage2Difficulty.GetInt() == 1 && Count < 40) return;
         Count = 0;
         if (Count % 3 == 0 && LimboState == true)
         {
